@@ -6,8 +6,5 @@
   "env": {
     "BUILDPACK_URL": "https://github.com/jean/training-sandbox"
   },
-  "addons": [
-    "heroku-postgresql:hobby-dev"
-  ],
   "keywords": ["plone", "training"]
 }
