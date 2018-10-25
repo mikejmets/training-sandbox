@@ -1,13 +1,10 @@
 {
   "name": "PloneConf 2018 training",
   "description": "A ready-to-use Plone instance for PloneConf 2018 'Hacking Plone' Training",
-  "repository": "https://github.com/mikejmets/training-sandbox",
+  "repository": "https://github.com/jean/training-sandbox",
   "logo": "http://www.coactivate.org/projects/plone-marketing/plone-logo-guidelines/plone-vertical-logo.png",
   "env": {
-    "BUILDPACK_URL": "https://github.com/mikejmets/training-sandbox"
+    "BUILDPACK_URL": "https://github.com/jean/training-sandbox"
   },
-  "addons": [
-    "heroku-postgresql:hobby-dev"
-  ],
   "keywords": ["plone", "training"]
 }
