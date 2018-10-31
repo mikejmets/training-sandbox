@@ -102,6 +102,8 @@ with open('schedule.csv', 'w') as csv_out:
                     row['title'] = h4.text
 
                 row['location'] = locations[count]
+                row['@type'] = 'location'
+                csv_writer.writerow(row)
                 count += 1
 
                 p = td.find('p')
@@ -135,9 +137,5 @@ with open('schedule.csv', 'w') as csv_out:
                     csv_writer.writerow(row)
 
                 print(row)
-
-
-
-
 
 
