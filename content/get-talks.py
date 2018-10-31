@@ -3,9 +3,69 @@ import lxml.html
 import requests
 
 schedule = {}
+speakers = {}
 
 with open('schedule.csv', 'w') as csv_out:
-    headers = ['start', 'end', 'location', 'title', 'level', 'speaker', 'timing']
+    headers = [
+        '@type',
+
+        'end',
+        'start',
+
+        'title',
+
+        'first_name',
+        'last_name',
+
+        'text',
+        # 'start', 'end', 'location', 'title', 'level', 'speaker', 'timing'
+
+
+        'level',
+        'timing',
+
+        'path',
+        'id',
+        'UID',
+        'subjects',
+        'version',
+        'rights',
+        'is_folderish',
+        'contributors',
+        '@components',
+        'review_state',
+        'expires',
+        'effective',
+        'language',
+        'created',
+        'modified',
+        'allow_discussion',
+        'creators',
+        'description',
+        'exclude_from_nav',
+        'relatedItems',
+        'nextPreviousEnabled',
+        'open_end',
+        'confirm_password',
+        'sync_uid',
+
+        'email',
+        'bio',
+        'password',
+        'homepage',
+        'whole_day',
+        'presenting',
+        'event_url',
+        'contact_name',
+        'recurrence',
+        'versioning_enabled',
+        'location',
+        'contact_phone',
+        'contact_email'
+                
+    ]
+
+
     csv_writer = csv.DictWriter(csv_out, headers)
     csv_writer.writeheader()
 
@@ -47,15 +107,35 @@ with open('schedule.csv', 'w') as csv_out:
                 p = td.find('p')
                 if p is None:
                     continue
+                speakers = []
                 if '/' in p.text:
-                    row['speaker'], row['level'] = p.text.split(' / ')
+                    speaker, row['level'] = p.text.split(' / ')
+                    if speaker.startswith('by '):
+                        speaker = speaker[3:]
+                    if ',' in speaker:
+                        for speaker in speaker.split(' , '):
+                            speakers.append(speaker.split(' ', 1))
+                    else:
+                        speakers.append(speaker.split(' ', 1))
                 else:
                     if '(' in p.text:
-                        row['speaker'], timing = p.text.split('(')
+                        speaker, timing = p.text.split(' (')
+                        if speaker.startswith('by '):
+                            speaker = speaker[3:]
                         row['timing'] = timing[:-1]
+                        speakers.append(speaker.split(' ', 1))
+
+
+                row['@type'] = 'session'
+                csv_writer.writerow(row)
+
+                row['@type'] = 'speaker'
+                for speaker in speakers:
+                    row['first_name'], row['last_name'] = speaker
+                    csv_writer.writerow(row)
+
                 print(row)
 
-                csv_writer.writerow(row)
 
 
 
