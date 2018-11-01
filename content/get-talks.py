@@ -1,6 +1,22 @@
 import csv
 import lxml.html
 import requests
+import re
+
+__version__ = '0.0.1'
+
+
+def slugify(string):
+    """
+    Slugify a unicode string.
+    Example:
+        >>> slugify(u"Héllø Wörld")
+        u"hello-world"
+    """
+
+    return re.sub(r'[-\s]+', '-',
+                re.sub(r'[^\w\s-]', '', string)
+                .strip().lower())
 
 schedule = {}
 speakers = {}
@@ -103,6 +119,7 @@ with open('schedule.csv', 'w') as csv_out:
 
                 row['location'] = locations[count]
                 row['@type'] = 'location'
+                row['path'] = 'Plone/' + slugify(row['location'])
                 csv_writer.writerow(row)
                 count += 1
 
@@ -129,11 +146,13 @@ with open('schedule.csv', 'w') as csv_out:
 
 
                 row['@type'] = 'session'
+                row['path'] = 'Plone/' + slugify(row['title'])
                 csv_writer.writerow(row)
 
                 row['@type'] = 'speaker'
                 for speaker in speakers:
                     row['first_name'], row['last_name'] = speaker
+                    row['path'] = 'Plone/' + slugify(' '.join([row['first_name'], row['last_name']]))
                     csv_writer.writerow(row)
 
                 print(row)
