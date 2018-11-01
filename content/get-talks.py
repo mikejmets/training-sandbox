@@ -3,8 +3,7 @@ import lxml.html
 import requests
 import re
 
-__version__ = '0.0.1'
-
+Plone = 'Plone2/'
 
 def slugify(string):
     """
@@ -85,14 +84,15 @@ with open('schedule.csv', 'w') as csv_out:
 
     # Create containers
     containers = [
-            ('Conference', 'conference', 'Plone/plone-conf'),
-            ('Attendees', 'attendees', 'Plone/plone-conf/attendees'),
-            ('Locations', 'locations', 'Plone/plone-conf/locations')]
+            ('Conference', 'conference', Plone + 'conference'),
+            ('Attendees', 'attendees', Plone + 'conference/attendees'),
+            ('Speakers', 'speakers', Plone + 'conference/speakers'),
+            ('Locations', 'locations', Plone + 'conference/locations')]
     row = {n: '' for n in headers}
     for container in containers:
         row['title'], row['@type'], row['path'] = container
+        row['id'] = container[1]
         csv_writer.writerow(row)
-
 
     location_names = set()
 
@@ -123,7 +123,7 @@ with open('schedule.csv', 'w') as csv_out:
                 if location not in location_names:
                     row['@type'] = 'location'
                     row['title'] = row['location'] = location
-                    row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location'])
+                    row['path'] = Plone + 'conference/locations/' + slugify(row['location'])
                     csv_writer.writerow(row)
                     location_names.add(location)
 
@@ -142,7 +142,7 @@ with open('schedule.csv', 'w') as csv_out:
                     row['@type'] = 'session'
                     row['title'] = title.text_content()
                     print(title.text_content())
-                    row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location']) + '/' + slugify(row['title'])
+                    row['path'] = Plone + 'conference/locations/' + slugify(row['location']) + '/' + slugify(row['title'])
                     csv_writer.writerow(row)
 
                     if ps:
@@ -173,7 +173,7 @@ with open('schedule.csv', 'w') as csv_out:
                         row['first_name'], row['last_name'] = speaker
                         fullname = ' '.join([row['first_name'], row['last_name']])
                         row['title'] = fullname
-                        row['path'] = 'Plone/' + slugify(fullname)
+                        row['path'] = Plone + slugify(fullname)
                         csv_writer.writerow(row)
 
                     # print(row)
