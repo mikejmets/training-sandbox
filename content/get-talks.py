@@ -80,7 +80,6 @@ with open('schedule.csv', 'w') as csv_out:
                 
     ]
 
-
     csv_writer = csv.DictWriter(csv_out, headers)
     csv_writer.writeheader()
 
@@ -94,6 +93,9 @@ with open('schedule.csv', 'w') as csv_out:
         row['title'], row['@type'], row['path'] = container
         csv_writer.writerow(row)
 
+
+    location_names = set()
+
     for day in [7,8,9]:
         page = requests.get('https://2018.ploneconf.org/schedule/talks-november-%s' % day)
         doc = lxml.html.fromstring(page.content)
@@ -105,71 +107,75 @@ with open('schedule.csv', 'w') as csv_out:
         locations = []
         # Skip the first column
         for td in tr[1:]:
-            locations.append(td.text)
+            locations.append(td.text_content())
 
         tbody = thead.getnext()
         for tr in tbody:
             th = tr[0]
             row = {n: '' for n in headers}
-            row['start'], row['end'] = th.text.split(' - ')
+            row['start'], row['end'] = th.text_content().split(' - ')
+
             count = 0
             for td in tr.iter('td'):
 
-                h4 = td.find('h4')
-                if h4 is None:
-                    h2 = td.find('h2')
-                    if h2 is None:
-                        # Blank cell
-                        continue
-                    else:
-                        title = h2.text
-                else:
-                    title = h4.text
-
-                row['location'] = locations[count]
-                row['title'] = locations[count]
-                row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location'])
-                row['@type'] = 'location'
-                row['path'] = 'Plone/' + slugify(row['location'])
-                csv_writer.writerow(row)
+                location = locations[count]
                 count += 1
+                if location not in location_names:
+                    row['@type'] = 'location'
+                    row['title'] = row['location'] = location
+                    row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location'])
+                    csv_writer.writerow(row)
+                    location_names.add(location)
 
-                row['@type'] = 'session'
-                row['title'] = title
-                row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location']) + '/' + slugify(title)
-                csv_writer.writerow(row)
-
-                p = td.find('p')
-                if p is None:
-                    continue
-                speakers = []
-                if '/' in p.text:
-                    speaker, row['level'] = p.text.split(' / ')
-                    if speaker.startswith('by '):
-                        speaker = speaker[3:]
-                    if ',' in speaker:
-                        for speaker in speaker.split(' , '):
-                            speakers.append(speaker.split(' ', 1))
-                    else:
-                        speakers.append(speaker.split(' ', 1))
+                if td.find('h2'):
+                    titles = td.iter('h2')
                 else:
-                    if '(' in p.text:
-                        speaker, timing = p.text.split(' (')
-                        if speaker.startswith('by '):
-                            speaker = speaker[3:]
-                        row['timing'] = timing[:-1]
-                        speakers.append(speaker.split(' ', 1))
+                    titles = td.iter('h4')
 
-                row['@type'] = 'session'
-                row['path'] = 'Plone/' + slugify(row['title'])
-                csv_writer.writerow(row)
+                if td.find('p'):
+                    ps = td.iter('p')
+                else:
+                    ps = None
 
-                row['@type'] = 'speaker'
-                for speaker in speakers:
-                    row['first_name'], row['last_name'] = speaker
-                    row['path'] = 'Plone/' + slugify(' '.join([row['first_name'], row['last_name']]))
+                for title in titles:
+
+                    row['@type'] = 'session'
+                    row['title'] = title.text_content()
+                    print(title.text_content())
+                    row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location']) + '/' + slugify(row['title'])
                     csv_writer.writerow(row)
 
-                print(row)
+                    if ps:
+                        p = next(ps)
+                    else:
+                        continue
+
+                    speakers = []
+                    if '/' in p.text_content():
+                        speaker, row['level'] = p.text_content().split(' / ')
+                        if speaker.startswith('by '):
+                            speaker = speaker[3:]
+                        if ',' in speaker:
+                            for speaker in speaker.split(' , '):
+                                speakers.append(speaker.split(' ', 1))
+                        else:
+                            speakers.append(speaker.split(' ', 1))
+                    else:
+                        if '(' in p.text_content():
+                            speaker, timing = p.text_content().split(' (')
+                            if speaker.startswith('by '):
+                                speaker = speaker[3:]
+                            row['timing'] = timing[:-1]
+                            speakers.append(speaker.split(' ', 1))
+
+                    row['@type'] = 'speaker'
+                    for speaker in speakers:
+                        row['first_name'], row['last_name'] = speaker
+                        fullname = ' '.join([row['first_name'], row['last_name']])
+                        row['title'] = fullname
+                        row['path'] = 'Plone/' + slugify(fullname)
+                        csv_writer.writerow(row)
+
+                    # print(row)
 
 
