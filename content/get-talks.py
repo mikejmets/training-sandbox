@@ -36,7 +36,6 @@ with open('schedule.csv', 'w') as csv_out:
         'text',
         # 'start', 'end', 'location', 'title', 'level', 'speaker', 'timing'
 
-
         'level',
         'timing',
 
@@ -85,6 +84,16 @@ with open('schedule.csv', 'w') as csv_out:
     csv_writer = csv.DictWriter(csv_out, headers)
     csv_writer.writeheader()
 
+    # Create containers
+    containers = [
+            ('Conference', 'conference', 'Plone/plone-conf'),
+            ('Attendees', 'attendees', 'Plone/plone-conf/attendees'),
+            ('Locations', 'locations', 'Plone/plone-conf/locations')]
+    row = {n: '' for n in headers}
+    for container in containers:
+        row['title'], row['@type'], row['path'] = container
+        csv_writer.writerow(row)
+
     for day in [7,8,9]:
         page = requests.get('https://2018.ploneconf.org/schedule/talks-november-%s' % day)
         doc = lxml.html.fromstring(page.content)
@@ -113,15 +122,22 @@ with open('schedule.csv', 'w') as csv_out:
                         # Blank cell
                         continue
                     else:
-                        row['title'] = h2.text
+                        title = h2.text
                 else:
-                    row['title'] = h4.text
+                    title = h4.text
 
                 row['location'] = locations[count]
+                row['title'] = locations[count]
+                row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location'])
                 row['@type'] = 'location'
                 row['path'] = 'Plone/' + slugify(row['location'])
                 csv_writer.writerow(row)
                 count += 1
+
+                row['@type'] = 'session'
+                row['title'] = title
+                row['path'] = 'Plone/plone-conf/locations/' + slugify(row['location']) + '/' + slugify(title)
+                csv_writer.writerow(row)
 
                 p = td.find('p')
                 if p is None:
@@ -143,7 +159,6 @@ with open('schedule.csv', 'w') as csv_out:
                             speaker = speaker[3:]
                         row['timing'] = timing[:-1]
                         speakers.append(speaker.split(' ', 1))
-
 
                 row['@type'] = 'session'
                 row['path'] = 'Plone/' + slugify(row['title'])
